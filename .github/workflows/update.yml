@@ -26,11 +26,13 @@ jobs:
         run: python filter_subs.py
 
       - name: Upload to Gist
+        env:
+          GIST_ID: ${{ secrets.GIST_ID }}
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
         run: |
-          gist_id="6368a9e94efc6cbb8437e8598db92db8"
-          filename="best_sub.yaml"
-          desc="Updated filtered subs"
-          curl -X PATCH "https://api.github.com/gists/$gist_id" \
-            -H "Authorization: token ${{ secrets.GIST_TOKEN }}" \
+          echo "Uploading to Gist..."
+          ESCAPED_CONTENT=$(jq -Rs . < best_sub.yaml)
+          curl -X PATCH "https://api.github.com/gists/$GIST_ID" \
+            -H "Authorization: Bearer $GIST_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            -d "{\"description\": \"$desc\", \"files\": {\"$filename\": {\"content\": \"$(cat best_sub.yaml)\"}}}"
+            -d "{\"files\": {\"best_sub.yaml\": {\"content\": $ESCAPED_CONTENT}}}"
