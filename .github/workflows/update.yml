@@ -2,15 +2,15 @@ name: Update Subs Filter
 
 on:
   schedule:
-    - cron: '0 */6 * * *'   # هر ۶ ساعت اجرا می‌شود
-  workflow_dispatch:         # اجازه اجرای دستی از UI
+    - cron: '0 */6 * * *'   # هر ۶ ساعت
+  workflow_dispatch:
 
 jobs:
   filter:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -20,23 +20,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install pyyaml aiohttp
 
       - name: Run filter script
         run: python filter_subs.py
 
-      - name: Upload filtered sub to Gist
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: Update filtered subscription
-          file_pattern: best_sub.yaml
-
-      - name: Create Gist with filtered subscription
-        uses: devops-infra/action-gist@v2
-        with:
-          gist_id: ${{ secrets.GIST_ID }}
-          filename: best_sub.yaml
-          description: Filtered subscription updated by GitHub Actions
-          public: true
-          file: best_sub.yaml
+      - name: Upload to Gist
+        run: |
+          gist_id="6368a9e94efc6cbb8437e8598db92db8"
+          filename="best_sub.yaml"
+          desc="Updated filtered subs"
+          curl -X PATCH "https://api.github.com/gists/$gist_id" \
+            -H "Authorization: token ${{ secrets.GIST_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "{\"description\": \"$desc\", \"files\": {\"$filename\": {\"content\": \"$(cat best_sub.yaml)\"}}}"
