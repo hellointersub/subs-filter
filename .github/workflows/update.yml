@@ -1,42 +1,31 @@
-name: Filter Subs and Upload to Gist
+name: Filter Subs & Upload
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # اجرا هر 6 ساعت
-  workflow_dispatch:       # امکان اجرا دستی
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
 
 jobs:
-  filter-subs:
+  main:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pyyaml aiohttp requests
+      - run: pip install pyyaml aiohttp
 
-      - name: Run filter script
-        run: python filter_subs.py
+      - run: python filter_subs.py
 
-      - name: Upload to Gist
+      - name: Upload config.yaml to Gist
         env:
           GIST_ID: ${{ secrets.GIST_ID }}
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
         run: |
-          echo "Preparing JSON payload with Python escaping..."
-
-          CONTENT=$(python3 -c "import json; print(json.dumps(open('best_sub.yaml').read()))")
-          echo "{\"files\": {\"best_sub.yaml\": {\"content\": $CONTENT}}}" > payload.json
-
-          echo "Uploading best_sub.yaml to Gist..."
+          CONTENT=$(python3 -c "import json; print(json.dumps(open('config.yaml').read()))")
+          echo "{\"files\": {\"config.yaml\": {\"content\": $CONTENT}}}" > payload.json
           curl -X PATCH "https://api.github.com/gists/$GIST_ID" \
             -H "Authorization: Bearer $GIST_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
